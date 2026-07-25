@@ -99,14 +99,14 @@ The actual quality data component which gets attached to items looks like this:
 
 ```json
 {
-  components: {
+  "components": {
     "quality_food:quality": {
-      level: 2,
-      type: "quality_food:gold"
+      "level": 2,
+      "type": "quality_food:gold"
     }
   },
-  count: 1,
-  id: "minecraft:apple"
+  "count": 1,
+  "id": "minecraft:apple"
 }
 ```
 
