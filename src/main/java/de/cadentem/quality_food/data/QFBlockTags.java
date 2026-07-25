@@ -52,6 +52,8 @@ public class QFBlockTags extends BlockTagsProvider {
                 .add(Blocks.HONEYCOMB_BLOCK)
                 .remove(Blocks.TORCHFLOWER)
                 .remove(Blocks.PITCHER_CROP)
+                /* Falling durians retain the quality of their source leaves. */
+                .addOptional(location("fruitsdelight", "durian"))
                 /* CDPR fruit saplings: their quality is propagated to generated tree blocks. */
                 .addOptional(location("fruitsdelight", "apple_sapling"))
                 .addOptional(location("fruitsdelight", "bayberry_sapling"))

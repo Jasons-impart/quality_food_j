@@ -7,6 +7,10 @@
     "#minecraft:crops",
     "#quality_food:quality_crops",
     {
+      "id": "fruitsdelight:durian",
+      "required": false
+    },
+    {
       "id": "fruitsdelight:apple_sapling",
       "required": false
     },
