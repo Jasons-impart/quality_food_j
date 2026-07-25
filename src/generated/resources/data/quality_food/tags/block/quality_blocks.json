@@ -5,6 +5,67 @@
   ],
   "values": [
     "#minecraft:crops",
+    "#quality_food:quality_crops",
+    {
+      "id": "fruitsdelight:apple_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:bayberry_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:durian_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:fig_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:hawberry_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:kiwi_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:lychee_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:mango_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:mangosteen_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:orange_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:peach_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:pear_sapling",
+      "required": false
+    },
+    {
+      "id": "fruitsdelight:persimmon_sapling",
+      "required": false
+    },
+    {
+      "id": "createdelightcore:jujube_sapling",
+      "required": false
+    },
+    {
+      "id": "createdelightcore:walnut_sapling",
+      "required": false
+    },
     "#minecraft:candle_cakes",
     "minecraft:pumpkin",
     "minecraft:pumpkin_stem",

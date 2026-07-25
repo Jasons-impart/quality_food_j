@@ -17,8 +17,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /** Makes sure that the result has the same quality as the input (for compacting / un-compacting) */
 @Mixin(value = RecipeHelper.class, remap = false)
 public abstract class RecipeHelperMixin {
-    @ModifyVariable(method = "getCompactingResult(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/p3pp3rf1y/sophisticatedcore/util/RecipeHelper$CompactingRecipeShape;Ljava/util/Map;)Lnet/p3pp3rf1y/sophisticatedcore/util/RecipeHelper$CompactingResult;", at = @At("STORE"), name = "result")
+    @ModifyVariable(method = "getCompactingResult(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/p3pp3rf1y/sophisticatedcore/util/RecipeHelper$CompactingRecipeShape;Ljava/util/Map;)Lnet/p3pp3rf1y/sophisticatedcore/util/RecipeHelper$CompactingResult;", at = @At("STORE"), name = "result", require = 0)
     private static ItemStack quality_food$applyQualityMultipleRecipeMatches(final ItemStack result, final ItemStack stack) {
+        QualityUtils.applyQuality(result, QualityUtils.getQuality(stack));
+        return result;
+    }
+
+    /** Sophisticated Core before CompactingRecipeShape was introduced (CDPR currently uses 1.4.36). */
+    @ModifyVariable(method = "getCompactingResult(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;IILjava/util/Map;)Lnet/p3pp3rf1y/sophisticatedcore/util/RecipeHelper$CompactingResult;", at = @At("STORE"), name = "result", require = 0)
+    private static ItemStack quality_food$applyQualityMultipleRecipeMatchesLegacy(final ItemStack result, final ItemStack stack) {
         QualityUtils.applyQuality(result, QualityUtils.getQuality(stack));
         return result;
     }

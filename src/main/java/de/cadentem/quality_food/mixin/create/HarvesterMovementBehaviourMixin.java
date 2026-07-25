@@ -34,7 +34,7 @@ public abstract class HarvesterMovementBehaviourMixin {
 
     @ModifyVariable(method = "lambda$visitNewPosition$0", at = @At("HEAD"), argsOnly = true)
     private ItemStack quality_food$applyQuality(final ItemStack stack, @Local(argsOnly = true) final BlockState state, @Local(argsOnly = true) final MovementContext context) {
-        QualityUtils.applyQuality(stack, state, quality_food$quality, null, context.world.getBlockState(quality_food$position), context.world.registryAccess());
+        QualityUtils.applyQuality(stack, state, quality_food$quality, null, context.world.getBlockState(quality_food$position.below()), context.world.registryAccess(), context.world, quality_food$position);
         return stack;
     }
 

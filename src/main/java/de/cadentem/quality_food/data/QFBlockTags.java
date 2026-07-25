@@ -20,6 +20,7 @@ import static de.cadentem.quality_food.compat.Compat.Mod.*;
 
 public class QFBlockTags extends BlockTagsProvider {
     public static final TagKey<Block> QUALITY_BLOCKS = BlockTags.create(QualityFood.location("quality_blocks"));
+    public static final TagKey<Block> QUALITY_CROPS = BlockTags.create(QualityFood.location("quality_crops"));
 
     public QFBlockTags(final PackOutput output, final CompletableFuture<HolderLookup.Provider> provider, @Nullable final ExistingFileHelper helper) {
         super(output, provider, QualityFood.MODID, helper);
@@ -27,8 +28,12 @@ public class QFBlockTags extends BlockTagsProvider {
 
     @Override
     protected void addTags(@NotNull final HolderLookup.Provider provider) {
+        tag(QUALITY_CROPS)
+                .addOptionalTag(location("createdelightcore", "quality_crops"));
+
         tag(QUALITY_BLOCKS)
                 .addTag(BlockTags.CROPS)
+                .addTag(QUALITY_CROPS)
                 .addTag(BlockTags.CANDLE_CAKES)
                 .add(Blocks.PUMPKIN)
                 .add(Blocks.PUMPKIN_STEM)
@@ -47,6 +52,22 @@ public class QFBlockTags extends BlockTagsProvider {
                 .add(Blocks.HONEYCOMB_BLOCK)
                 .remove(Blocks.TORCHFLOWER)
                 .remove(Blocks.PITCHER_CROP)
+                /* CDPR fruit saplings: their quality is propagated to generated tree blocks. */
+                .addOptional(location("fruitsdelight", "apple_sapling"))
+                .addOptional(location("fruitsdelight", "bayberry_sapling"))
+                .addOptional(location("fruitsdelight", "durian_sapling"))
+                .addOptional(location("fruitsdelight", "fig_sapling"))
+                .addOptional(location("fruitsdelight", "hawberry_sapling"))
+                .addOptional(location("fruitsdelight", "kiwi_sapling"))
+                .addOptional(location("fruitsdelight", "lychee_sapling"))
+                .addOptional(location("fruitsdelight", "mango_sapling"))
+                .addOptional(location("fruitsdelight", "mangosteen_sapling"))
+                .addOptional(location("fruitsdelight", "orange_sapling"))
+                .addOptional(location("fruitsdelight", "peach_sapling"))
+                .addOptional(location("fruitsdelight", "pear_sapling"))
+                .addOptional(location("fruitsdelight", "persimmon_sapling"))
+                .addOptional(location("createdelightcore", "jujube_sapling"))
+                .addOptional(location("createdelightcore", "walnut_sapling"))
                 .addOptionalTag(location(FARMERSDELIGHT.modid(), "wild_crops"))
                 .addOptionalTag(location(FARM_AND_CHARM.modid(), "wild_crops"))
                 .addOptional(location(FARMERSDELIGHT.modid(), "rice"))

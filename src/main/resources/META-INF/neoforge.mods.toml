@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "${loader_version_range}"
 license = "${mod_license}"
-issueTrackerURL = "https://github.com/SiverDX/quality_food/issues"
+issueTrackerURL = "https://github.com/Jasons-impart/quality_food_j/issues"
 
 [[mods]]
 modId = "${mod_id}"

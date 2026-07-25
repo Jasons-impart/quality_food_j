@@ -28,40 +28,42 @@ import javax.annotation.Nullable;
 @Mixin(Block.class)
 public abstract class BlockMixin {
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V", at = @At("HEAD"))
-    private static void quality_food$storeBlockState(final BlockState state, final Level level, final BlockPos position, final CallbackInfo callback) {
-        DropData.CURRENT.set(DropData.create(LevelData.get(level, position, true), state, null, level.getBlockState(position.below())));
+    private static void quality_food$storeBlockState(final BlockState state, final Level level, final BlockPos position, final CallbackInfo callback, @Share("previous") final LocalRef<DropData> previousRef) {
+        DropData previous = DropData.CURRENT.get();
+        previousRef.set(DropData.push(new DropData(LevelData.get(level, position, true), state, previous == null ? null : previous.player(), level.getBlockState(position.below()), level, position.immutable())));
     }
 
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V", at = @At("TAIL"))
-    private static void quality_food$clearBlockState(final BlockState state, final Level level, final BlockPos position, final CallbackInfo callback) {
-        DropData.CURRENT.remove();
+    private static void quality_food$clearBlockState(final BlockState state, final Level level, final BlockPos position, final CallbackInfo callback, @Share("previous") final LocalRef<DropData> previousRef) {
+        DropData.pop(previousRef.get());
     }
 
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;)V", at = @At("HEAD"))
-    private static void quality_food$storeBlockState(final BlockState state, final LevelAccessor level, final BlockPos position, final @Nullable BlockEntity blockEntity, final CallbackInfo callback) {
-        DropData.CURRENT.set(DropData.create(LevelData.get(level, position, true), state, null, level.getBlockState(position.below())));
+    private static void quality_food$storeBlockState(final BlockState state, final LevelAccessor level, final BlockPos position, final @Nullable BlockEntity blockEntity, final CallbackInfo callback, @Share("previous") final LocalRef<DropData> previousRef) {
+        DropData previous = DropData.CURRENT.get();
+        previousRef.set(DropData.push(new DropData(LevelData.get(level, position, true), state, previous == null ? null : previous.player(), level.getBlockState(position.below()), level instanceof Level actualLevel ? actualLevel : null, position.immutable())));
     }
 
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;)V", at = @At("TAIL"))
-    private static void quality_food$clearBlockState(final BlockState state, final LevelAccessor level, final BlockPos position, final @Nullable BlockEntity blockEntity, final CallbackInfo callback) {
-        DropData.CURRENT.remove();
+    private static void quality_food$clearBlockState(final BlockState state, final LevelAccessor level, final BlockPos position, final @Nullable BlockEntity blockEntity, final CallbackInfo callback, @Share("previous") final LocalRef<DropData> previousRef) {
+        DropData.pop(previousRef.get());
     }
 
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;)V", at = @At("HEAD"), remap = false)
-    private static void quality_food$storeBlockState(final BlockState state, final Level level, final BlockPos position, final @Nullable BlockEntity blockEntity, final Entity entity, final ItemStack tool, final CallbackInfo callback) {
-        DropData.CURRENT.set(DropData.create(LevelData.get(level, position, true), state, entity, level.getBlockState(position.below())));
+    private static void quality_food$storeBlockState(final BlockState state, final Level level, final BlockPos position, final @Nullable BlockEntity blockEntity, final Entity entity, final ItemStack tool, final CallbackInfo callback, @Share("previous") final LocalRef<DropData> previousRef) {
+        previousRef.set(DropData.push(DropData.create(LevelData.get(level, position, true), state, entity, level.getBlockState(position.below()), level, position)));
     }
 
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;)V", at = @At("TAIL"), remap = false)
-    private static void quality_food$clearBlockState(final BlockState state, final Level level, final BlockPos position, final @Nullable BlockEntity blockEntity, final @Nullable Entity entity, final ItemStack tool, final CallbackInfo callback) {
-        DropData.CURRENT.remove();
+    private static void quality_food$clearBlockState(final BlockState state, final Level level, final BlockPos position, final @Nullable BlockEntity blockEntity, final @Nullable Entity entity, final ItemStack tool, final CallbackInfo callback, @Share("previous") final LocalRef<DropData> previousRef) {
+        DropData.pop(previousRef.get());
     }
 
     /** Set missing drop data context if needed */
     @Inject(method = "popResource(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;)V", at = @At("HEAD"))
     private static void quality_food$setDropData(final Level level, final BlockPos position, final ItemStack stack, final CallbackInfo callback, @Share("flag") final LocalRef<Boolean> flagRef) {
         if (DropData.CURRENT.get() == null) {
-            DropData.CURRENT.set(new DropData(LevelData.get(level, position, true), level.getBlockState(position), null, level.getBlockState(position.below())));
+            DropData.CURRENT.set(new DropData(LevelData.get(level, position, true), level.getBlockState(position), null, level.getBlockState(position.below()), level, position.immutable()));
             flagRef.set(true);
         }
     }
@@ -81,7 +83,7 @@ public abstract class BlockMixin {
     @Inject(method = "popResourceFromFace", at = @At("HEAD"))
     private static void quality_food$setDropData(final Level level, final BlockPos position, final Direction direction, final ItemStack stack, final CallbackInfo callback, @Share("flag") final LocalRef<Boolean> flagRef) {
         if (DropData.CURRENT.get() == null) {
-            DropData.CURRENT.set(new DropData(LevelData.get(level, position, true), level.getBlockState(position),null, level.getBlockState(position.below())));
+            DropData.CURRENT.set(new DropData(LevelData.get(level, position, true), level.getBlockState(position), null, level.getBlockState(position.below()), level, position.immutable()));
             flagRef.set(true);
         }
     }
@@ -113,7 +115,7 @@ public abstract class BlockMixin {
         if (dropData == null) {
             QualityUtils.applyQuality(stack, null, level.registryAccess());
         } else {
-            QualityUtils.applyQuality(stack, dropData.state(), dropData.quality(), dropData.player(), dropData.farmland(), level.registryAccess());
+            QualityUtils.applyQuality(stack, dropData.state(), dropData.quality(), dropData.player(), dropData.farmland(), level.registryAccess(), dropData.level(), dropData.position());
         }
 
         return stack;

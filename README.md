@@ -1,4 +1,12 @@
-# General
+# Quality Food — CDPR Edition
+
+A CDPR-focused fork of Quality Food, with compatibility and quality-propagation fixes for Create Delight Project Rebirth.
+
+- Original project: [SiverDX/quality_food](https://github.com/SiverDX/quality_food)
+- Original author: Cadentem
+- CDPR fork maintained by: JSI Team
+
+## General
 This mod adds quality to food and certain food-related material (e.g. crops) through data components
 
 Quality can:
@@ -160,8 +168,30 @@ This is mostly about block interaction / quality application through crafting
 - If a mod adds a new crafting block then quality may not apply correctly
 - Items should generally be fine
 
+## CDPR compatibility additions
+
+The CDPR fork additionally supports quality propagation for:
+
+- FTB Ultimine right-click harvesting
+- Fruits Delight fruit leaves, fruit bushes, saplings, generated trees, and falling durians
+- Create and L2Harvester automated harvesting
+- Ratatouille ovens, squeeze basins, and threshers
+- Refurbished Furniture frying pans and stoves
+- Ecliptic Seasons harvest chance adjustments
+
+See [CHANGELOG.md](CHANGELOG.md) for the complete `2.3.6-cdpr.1` release notes.
+
 # Misc
 
 ![Example](https://i.imgur.com/hUnpNUh.png)
 
 Credits for the quality icons go to https://twitter.com/concernedape
+
+## CDPR fork releases
+
+Releases are built from the `1.21.1` branch by `.github/workflows/release.yml`.
+
+- Push a tag such as `v2.3.6-cdpr.1`, or run the `Release` workflow manually.
+- GitHub Releases work without additional repository configuration.
+- CurseForge releases are published to project `1623542`.
+- Set the repository secret `CURSEFORGE_TOKEN` before running a release.

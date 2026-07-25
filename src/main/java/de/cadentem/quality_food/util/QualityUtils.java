@@ -2,15 +2,19 @@ package de.cadentem.quality_food.util;
 
 import com.mojang.datafixers.util.Pair;
 import de.cadentem.quality_food.compat.Compat;
+import de.cadentem.quality_food.compat.EclipticSeasonsCompat;
 import de.cadentem.quality_food.compat.SpecialContainer;
 import de.cadentem.quality_food.config.ServerConfig;
 import de.cadentem.quality_food.core.Modification;
 import de.cadentem.quality_food.core.codecs.Quality;
 import de.cadentem.quality_food.core.codecs.QualityType;
+import de.cadentem.quality_food.data.QFBlockTags;
 import de.cadentem.quality_food.registry.QFComponents;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -21,7 +25,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vectorwing.farmersdelight.common.block.WildCropBlock;
@@ -50,15 +58,17 @@ public class QualityUtils {
 
             Holder<QualityType> type = QualityUtils.getType(ingredient);
 
-            if (type.value() != QualityType.NONE) {
-                totalWeight += type.value().weight();
+            if (type.value() == QualityType.NONE) {
+                stack.remove(QFComponents.QUALITY_DATA_COMPONENT);
+                return;
             }
 
+            totalWeight += type.value().weight();
             validIngredients++;
         }
 
         if (validIngredients == 0) {
-            applyQuality(stack, player, access);
+            stack.remove(QFComponents.QUALITY_DATA_COMPONENT);
             return;
         }
 
@@ -87,8 +97,15 @@ public class QualityUtils {
 
     /** Used for block drops */
     public static void applyQuality(final ItemStack stack, final BlockState state, final Quality blockQuality, @Nullable final Player player, @Nullable final BlockState farmland, final RegistryAccess access) {
+        applyQuality(stack, state, blockQuality, player, farmland, access, null, null);
+    }
+
+    /** Used for block drops when the harvest position is known. */
+    public static void applyQuality(final ItemStack stack, final BlockState state, final Quality blockQuality, @Nullable final Player player, @Nullable final BlockState farmland, final RegistryAccess access, @Nullable final Level level, @Nullable final BlockPos position) {
         if (isRelevantCrop(state)) {
             Holder<QualityType> selected = null;
+            BlockPos effectivePosition = getEffectiveCropPosition(level, position, state);
+            BlockState effectiveFarmland = level != null && effectivePosition != null ? level.getBlockState(effectivePosition.below()) : farmland;
 
             for (Holder<QualityType> type : access.registryOrThrow(QFComponents.QUALITY_TYPE_REGISTRY).holders().toList()) {
                 if (selected != null && type.value().level() <= selected.value().level()) {
@@ -105,7 +122,8 @@ public class QualityUtils {
 
                 chance = Modification.harvestOrSeedMultiplier(type, stack).apply(chance);
                 chance = Modification.luck(player).apply(chance);
-                chance = Modification.farmland(state, farmland).apply(chance);
+                chance = Modification.farmland(state, effectiveFarmland).apply(chance);
+                chance = Modification.multiplicative(getSeasonGrowChance(level, effectivePosition, state, blockQuality, type)).apply(chance);
 
                 if (chance > 0 && chance >= RANDOM.nextDouble()) {
                     selected = type;
@@ -122,6 +140,54 @@ public class QualityUtils {
             // The block itself or harvested items when the crop has no quality
             applyQuality(stack, player, access);
         }
+    }
+
+    private static float getSeasonGrowChance(@Nullable final Level level, @Nullable final BlockPos position, final BlockState state, final Quality blockQuality, final Holder<QualityType> targetType) {
+        if (level == null || position == null) {
+            return 1.0F;
+        }
+
+        float growChance = EclipticSeasonsCompat.getGrowChance(level, position, state);
+        int sourceRank = state.is(Blocks.SUGAR_CANE) ? 0 : blockQuality.level();
+        float baseGrowChance = removeRankBoost(growChance, sourceRank);
+        float correctedGrowChance = applyRankBoost(baseGrowChance, targetType.value().level());
+        return Mth.clamp(correctedGrowChance * 1.25F, 0.0F, 1.0F);
+    }
+
+    private static @Nullable BlockPos getEffectiveCropPosition(@Nullable final Level level, @Nullable final BlockPos position, final BlockState state) {
+        String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+        if (level == null || position == null || !(state.is(Blocks.SUGAR_CANE) || blockId.equals("farmersdelight:tomatoes"))) {
+            return position;
+        }
+
+        BlockPos base = position;
+        while (level.getBlockState(base.below()).is(state.getBlock())) {
+            base = base.below();
+        }
+        return base;
+    }
+
+    private static float applyRankBoost(final float chance, final int rank) {
+        float clamped = Mth.clamp(chance, 0.0F, 1.0F);
+        if (rank <= 0) {
+            return clamped;
+        }
+        float boost = getRankBoost(rank);
+        return Mth.clamp(boost + (1.0F - boost) * clamped, 0.0F, 1.0F);
+    }
+
+    private static float removeRankBoost(final float chance, final int rank) {
+        float clamped = Mth.clamp(chance, 0.0F, 1.0F);
+        if (rank <= 0) {
+            return clamped;
+        }
+        float boost = getRankBoost(rank);
+        float denominator = 1.0F - boost;
+        return denominator <= 0.0F ? 1.0F : Mth.clamp((clamped - boost) / denominator, 0.0F, 1.0F);
+    }
+
+    private static float getRankBoost(final int rank) {
+        return (float) (Math.pow(2, rank - 1) / 4.0D);
     }
 
     /** Generic if no further context is present */
@@ -195,6 +261,28 @@ public class QualityUtils {
     @SuppressWarnings("RedundantIfStatement") // ignore for clarity
     private static boolean isRelevantCrop(final BlockState state) {
         if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
+            return true;
+        }
+
+        if (state.hasProperty(BlockStateProperties.AGE_4)) {
+            return state.getValue(BlockStateProperties.AGE_4) == 4;
+        }
+
+        if (state.hasProperty(BlockStateProperties.AGE_3)) {
+            return state.getValue(BlockStateProperties.AGE_3) == 3;
+        }
+
+        String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+        if (blockId.equals("mynethersdelight:powdery_cane") || blockId.equals("mynethersdelight:powdery_cannon")) {
+            for (var property : state.getProperties()) {
+                if (property instanceof BooleanProperty booleanProperty && property.getName().equals("lit")) {
+                    return state.getValue(booleanProperty);
+                }
+            }
+            return false;
+        }
+
+        if (state.is(QFBlockTags.QUALITY_CROPS)) {
             return true;
         }
 

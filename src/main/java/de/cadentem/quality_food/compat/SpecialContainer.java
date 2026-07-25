@@ -17,6 +17,9 @@ public class SpecialContainer extends SimpleContainer {
 
     @Override
     public void setItem(final int index, @NotNull final ItemStack stack) {
+        if (index < 0 || index >= ingredients.size()) {
+            return;
+        }
         super.setItem(index, stack);
         ingredients.set(index, stack);
     }

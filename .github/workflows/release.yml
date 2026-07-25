@@ -1,0 +1,157 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Mod version, for example 2.3.6-cdpr.1"
+        required: true
+        type: string
+      version_type:
+        description: "CurseForge release channel"
+        required: true
+        default: beta
+        type: choice
+        options:
+          - release
+          - beta
+          - alpha
+      release_notes:
+        description: "Release notes body; leave empty for an automatic note"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release branch
+        shell: bash
+        run: |
+          git fetch --no-tags origin '+refs/heads/1.21.1:refs/remotes/origin/1.21.1'
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/1.21.1; then
+            echo "::error::Release commit $GITHUB_SHA is not contained in origin/1.21.1."
+            exit 1
+          fi
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+
+      - name: Set release variables
+        id: vars
+        shell: bash
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+            VERSION_TYPE="$INPUT_VERSION_TYPE"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+            VERSION_TYPE="release"
+          fi
+
+          VERSION="${VERSION#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([._-][[:alnum:]._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          TAG="v$VERSION"
+          NAME="Quality Food $VERSION for Minecraft 1.21.1"
+
+          {
+            echo "version=$VERSION"
+            echo "version_type=$VERSION_TYPE"
+            echo "tag=$TAG"
+            echo "name=$NAME"
+          } >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VERSION_TYPE: ${{ inputs.version_type }}
+
+      - name: Make Gradle wrapper executable
+        shell: bash
+        run: chmod +x ./gradlew
+
+      - name: Build
+        shell: bash
+        run: ./gradlew clean build -Pmod_version="$RELEASE_VERSION" --console=plain --no-daemon
+        env:
+          RELEASE_VERSION: ${{ steps.vars.outputs.version }}
+
+      - name: Collect release jar
+        id: asset
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          mapfile -t jars < <(find build/libs -maxdepth 1 -type f -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" | sort)
+          if [ "${#jars[@]}" -ne 1 ]; then
+            printf 'Expected exactly one primary jar, found %s:\n' "${#jars[@]}"
+            printf '%s\n' "${jars[@]}"
+            exit 1
+          fi
+          cp "${jars[0]}" release-assets/
+          echo "jar=release-assets/$(basename "${jars[0]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          NOTES="$INPUT_RELEASE_NOTES"
+          if [ -z "$NOTES" ]; then
+            cp CHANGELOG.md CHANGELOG_RELEASE.md
+          else
+            printf '%s\n' "$NOTES" > CHANGELOG_RELEASE.md
+          fi
+        env:
+          RELEASE_VERSION: ${{ steps.vars.outputs.version }}
+          INPUT_RELEASE_NOTES: ${{ inputs.release_notes }}
+
+      - name: Publish GitHub release
+        uses: Kir-Antipov/mc-publish@52307b03863581dec6b652b83e597aec02ebb075 # v3.3
+        with:
+          files: ${{ steps.asset.outputs.jar }}
+          name: ${{ steps.vars.outputs.name }}
+          version: ${{ steps.vars.outputs.version }}
+          version-type: ${{ steps.vars.outputs.version_type }}
+          changelog-file: CHANGELOG_RELEASE.md
+          loaders: neoforge
+          game-versions: 1.21.1
+          java: 21
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ steps.vars.outputs.tag }}
+
+      - name: Publish CurseForge release
+        uses: Kir-Antipov/mc-publish@52307b03863581dec6b652b83e597aec02ebb075 # v3.3
+        with:
+          files: ${{ steps.asset.outputs.jar }}
+          name: ${{ steps.vars.outputs.name }}
+          version: ${{ steps.vars.outputs.version }}
+          version-type: ${{ steps.vars.outputs.version_type }}
+          changelog-file: CHANGELOG_RELEASE.md
+          loaders: neoforge
+          game-versions: 1.21.1
+          java: 21
+          curseforge-id: 1623542
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
