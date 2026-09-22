@@ -3,6 +3,7 @@ package de.cadentem.quality_food.util;
 import com.mojang.datafixers.util.Pair;
 import de.cadentem.quality_food.compat.Compat;
 import de.cadentem.quality_food.compat.EclipticSeasonsCompat;
+import de.cadentem.quality_food.compat.HarvestAutomationCompat;
 import de.cadentem.quality_food.compat.SpecialContainer;
 import de.cadentem.quality_food.config.ServerConfig;
 import de.cadentem.quality_food.core.Modification;
@@ -106,9 +107,13 @@ public class QualityUtils {
             Holder<QualityType> selected = null;
             BlockPos effectivePosition = getEffectiveCropPosition(level, position, state);
             BlockState effectiveFarmland = level != null && effectivePosition != null ? level.getBlockState(effectivePosition.below()) : farmland;
+            HarvestAutomationCompat.Settings automation = getQuality(stack).level() > 0 ? null : HarvestAutomationCompat.getSettings(state);
 
             for (Holder<QualityType> type : access.registryOrThrow(QFComponents.QUALITY_TYPE_REGISTRY).holders().toList()) {
                 if (selected != null && type.value().level() <= selected.value().level()) {
+                    continue;
+                }
+                if (automation != null && type.value().level() > automation.maxQuality()) {
                     continue;
                 }
 
@@ -123,7 +128,10 @@ public class QualityUtils {
                 chance = Modification.harvestOrSeedMultiplier(type, stack).apply(chance);
                 chance = Modification.luck(player).apply(chance);
                 chance = Modification.farmland(state, effectiveFarmland).apply(chance);
-                chance = Modification.multiplicative(getSeasonGrowChance(level, effectivePosition, state, blockQuality, type)).apply(chance);
+                chance = Modification.multiplicative(getSeasonGrowChance(level, effectivePosition, state, blockQuality, type, automation != null)).apply(chance);
+                if (automation != null) {
+                    chance = Modification.multiplicative(automation.multiplier()).apply(chance);
+                }
 
                 if (chance > 0 && chance >= RANDOM.nextDouble()) {
                     selected = type;
@@ -142,13 +150,20 @@ public class QualityUtils {
         }
     }
 
-    private static float getSeasonGrowChance(@Nullable final Level level, @Nullable final BlockPos position, final BlockState state, final Quality blockQuality, final Holder<QualityType> targetType) {
+    private static float getSeasonGrowChance(@Nullable final Level level, @Nullable final BlockPos position, final BlockState state, final Quality blockQuality, final Holder<QualityType> targetType, final boolean automated) {
         if (level == null || position == null) {
             return 1.0F;
         }
 
-        float growChance = EclipticSeasonsCompat.getGrowChance(level, position, state);
         int sourceRank = state.is(Blocks.SUGAR_CANE) ? 0 : blockQuality.level();
+        if (automated) {
+            float growChance = HarvestAutomationCompat.getGrowChance(level, position, state, sourceRank);
+            float baseGrowChance = removeRankBoost(growChance, sourceRank);
+            float correctedGrowChance = applyRankBoost(baseGrowChance, targetType.value().level());
+            return Mth.clamp(correctedGrowChance, 0.0F, 1.0F);
+        }
+
+        float growChance = EclipticSeasonsCompat.getGrowChance(level, position, state);
         float baseGrowChance = removeRankBoost(growChance, sourceRank);
         float correctedGrowChance = applyRankBoost(baseGrowChance, targetType.value().level());
         return Mth.clamp(correctedGrowChance * 1.25F, 0.0F, 1.0F);
@@ -283,6 +298,10 @@ public class QualityUtils {
         }
 
         if (state.is(QFBlockTags.QUALITY_CROPS)) {
+            return true;
+        }
+
+        if (HarvestAutomationCompat.isExtraCrop(state)) {
             return true;
         }
 
