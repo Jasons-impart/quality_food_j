@@ -4,6 +4,8 @@ import com.llamalad7.mixinextras.sugar.Local;
 import de.cadentem.quality_food.core.attachments.AttachmentHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,12 +22,21 @@ public abstract class LevelMixin {
             return newState;
         }
 
-        // A different block now occupies this position - neither the stored quality nor a
-        // pending removal record of the previous block should leak to it
-        if (!newState.is(oldState.getBlock())) {
+        // Preserve quality across the vanilla growth variants that represent the same plant.
+        // Every other block replacement must clear both stored quality and stale pending removals.
+        if (!newState.is(oldState.getBlock()) && !quality_food$isStemTransition(oldState.getBlock(), newState.getBlock())) {
             level.getData(AttachmentHandler.LEVEL_DATA).remove(position, level.getGameTime());
         }
 
         return newState;
+    }
+
+    private static boolean quality_food$isStemTransition(final Block oldBlock, final Block newBlock) {
+        return oldBlock == Blocks.MELON_STEM && newBlock == Blocks.ATTACHED_MELON_STEM
+                || oldBlock == Blocks.ATTACHED_MELON_STEM && newBlock == Blocks.MELON_STEM
+                || oldBlock == Blocks.PUMPKIN_STEM && newBlock == Blocks.ATTACHED_PUMPKIN_STEM
+                || oldBlock == Blocks.ATTACHED_PUMPKIN_STEM && newBlock == Blocks.PUMPKIN_STEM
+                || oldBlock == Blocks.CAVE_VINES && newBlock == Blocks.CAVE_VINES_PLANT
+                || oldBlock == Blocks.CAVE_VINES_PLANT && newBlock == Blocks.CAVE_VINES;
     }
 }

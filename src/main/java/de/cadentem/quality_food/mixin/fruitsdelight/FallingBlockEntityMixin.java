@@ -81,6 +81,7 @@ public abstract class FallingBlockEntityMixin {
         return self.spawnAtLocation(stack);
     }
 
+    @Unique
     private static boolean quality_food$isDurian(final BlockState state) {
         return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString().equals("fruitsdelight:durian");
     }

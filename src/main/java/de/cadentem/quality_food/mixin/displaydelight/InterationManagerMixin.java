@@ -1,15 +1,22 @@
 package de.cadentem.quality_food.mixin.displaydelight;
 
 import com.jkvin114.displaydelight.events.InterationManager;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import de.cadentem.quality_food.core.attachments.LevelData;
 import de.cadentem.quality_food.core.codecs.Quality;
 import de.cadentem.quality_food.util.QualityUtils;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -52,9 +59,17 @@ public abstract class InterationManagerMixin {
         LevelData.set(world, rez.getBlockPos(), !Quality.NONE.equals(quality) ? quality : Quality.PLAYER_PLACED);
     }
 
-    @Inject(method = "tryPlaceItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;swing(Lnet/minecraft/world/InteractionHand;Z)V"))
-    private static void quality_food$applyQualityOnDisplay(Player player, ServerLevel world, BlockHitResult rez, boolean isMainHand, CallbackInfoReturnable<Boolean> callback, @Local ItemStack stack) {
+    /** Capture the placement position and held quality before BlockItem consumes the stack. */
+    @WrapOperation(method = "tryPlaceItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;useOn(Lnet/minecraft/world/item/context/UseOnContext;)Lnet/minecraft/world/InteractionResult;"))
+    private static InteractionResult quality_food$applyQualityOnDisplay(Item item, UseOnContext context, Operation<InteractionResult> original, @Local(argsOnly = true) ServerLevel world, @Local ItemStack stack) {
+        BlockPos placed = new BlockPlaceContext(context).getClickedPos();
         Quality quality = QualityUtils.getQuality(stack);
-        LevelData.set(world, rez.getBlockPos(), !Quality.NONE.equals(quality) ? quality : Quality.PLAYER_PLACED);
+        InteractionResult result = original.call(item, context);
+
+        if (result == InteractionResult.CONSUME && Quality.NONE.equals(LevelData.get(world, placed))) {
+            LevelData.set(world, placed, !Quality.NONE.equals(quality) ? quality : Quality.PLAYER_PLACED);
+        }
+
+        return result;
     }
 }
