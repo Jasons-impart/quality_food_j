@@ -19,7 +19,7 @@ public abstract class BlockItemMixin {
     private void quality_food$storeQuality(final BlockPlaceContext context, final BlockState state, final CallbackInfoReturnable<Boolean> callback) {
         if (callback.getReturnValue() && Utils.isValidBlock(state.getBlock())) {
             Quality quality = QualityUtils.getQuality(context.getItemInHand());
-            context.getLevel().getData(AttachmentHandler.LEVEL_DATA).set(context.getClickedPos(), quality != Quality.NONE ? quality : Quality.PLAYER_PLACED);
+            context.getLevel().getData(AttachmentHandler.LEVEL_DATA).set(context.getClickedPos(), !Quality.NONE.equals(quality) ? quality : Quality.PLAYER_PLACED);
         }
     }
 }

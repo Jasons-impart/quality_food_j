@@ -119,7 +119,7 @@ public class QualityUtils {
 
                 double chance;
 
-                if (blockQuality == Quality.NONE || blockQuality == Quality.PLAYER_PLACED) {
+                if (Quality.NONE.equals(blockQuality) || Quality.PLAYER_PLACED.equals(blockQuality)) {
                     chance = type.value().chance();
                 } else {
                     chance = QualityUtils.calculateChance(type.value(), blockQuality.getType().value().weight());
@@ -144,7 +144,7 @@ public class QualityUtils {
         } else if (isValidQuality(blockQuality)) {
             // The block itself if it has quality
             applyQuality(stack, blockQuality);
-        } else if (blockQuality != Quality.PLAYER_PLACED) {
+        } else if (!Quality.PLAYER_PLACED.equals(blockQuality)) {
             // The block itself or harvested items when the crop has no quality
             applyQuality(stack, player, access);
         }
@@ -467,6 +467,6 @@ public class QualityUtils {
     }
 
     public static boolean isValidQuality(final Quality quality) {
-        return quality != null && quality != Quality.NONE && quality != Quality.PLAYER_PLACED;
+        return quality != null && !Quality.NONE.equals(quality) && !Quality.PLAYER_PLACED.equals(quality);
     }
 }

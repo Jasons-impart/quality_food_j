@@ -50,7 +50,7 @@ public class QualityProvider implements IBlockComponentProvider, IServerDataProv
     public void appendServerData(final CompoundTag tag, final BlockAccessor accessor) {
         Quality quality = accessor.getLevel().getData(AttachmentHandler.LEVEL_DATA).get(accessor.getPosition());
 
-        if (quality != Quality.NONE) {
+        if (!Quality.NONE.equals(quality)) {
             tag.putString(QualityFood.concat("type"), quality.type().toString());
             tag.putInt(QualityFood.concat("level"), quality.level());
         }

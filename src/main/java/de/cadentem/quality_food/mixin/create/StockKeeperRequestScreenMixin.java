@@ -16,7 +16,7 @@ public abstract class StockKeeperRequestScreenMixin {
     private void quality_food$renderQualityIcon(final GuiGraphics graphics, final float scale, final BigItemStack entry, final boolean isStackHovered, final boolean isRenderingOrders, final CallbackInfo callback) {
         Quality quality = QualityUtils.getQuality(entry.stack);
 
-        if (quality == Quality.NONE) {
+        if (Quality.NONE.equals(quality)) {
             return;
         }
 

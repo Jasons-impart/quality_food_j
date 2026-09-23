@@ -19,7 +19,7 @@ public abstract class GuiGraphicsMixin {
     private void quality_food$renderIcon(final LivingEntity entity, final Level level, final ItemStack stack, int x, int y, int seed, int guiOffset, final CallbackInfo callback, @Local final BakedModel model) {
         Quality quality = QualityUtils.getQuality(stack);
 
-        if (quality == Quality.NONE) {
+        if (Quality.NONE.equals(quality)) {
             return;
         }
 

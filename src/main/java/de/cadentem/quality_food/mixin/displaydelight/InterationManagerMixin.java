@@ -41,7 +41,7 @@ public abstract class InterationManagerMixin {
     private static void quality_food$checkQuality(Player player, ServerLevel world, BlockHitResult rez, boolean isMainHand, CallbackInfoReturnable<Boolean> callback, @Local ItemStack handStack) {
         Quality blockQuality = LevelData.get(world, rez.getBlockPos());
         Quality itemQuality = QualityUtils.getQuality(handStack);
-        if (!(blockQuality == itemQuality || (blockQuality == Quality.PLAYER_PLACED && itemQuality == Quality.NONE))) {
+        if (!(blockQuality.equals(itemQuality) || (Quality.PLAYER_PLACED.equals(blockQuality) && Quality.NONE.equals(itemQuality)))) {
             callback.setReturnValue(false);
         }
     }
@@ -49,12 +49,12 @@ public abstract class InterationManagerMixin {
     @Inject(method = {"tryPlaceItemOnPlate", "tryPlaceItemOnSmallPlate"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z", shift = At.Shift.AFTER))
     private static void quality_food$applyQuality(Player player, ServerLevel world, BlockHitResult rez, boolean isMainHand, CallbackInfoReturnable<Boolean> callback, @Local ItemStack handStack) {
         Quality quality = QualityUtils.getQuality(handStack);
-        LevelData.set(world, rez.getBlockPos(), quality != Quality.NONE ? quality : Quality.PLAYER_PLACED);
+        LevelData.set(world, rez.getBlockPos(), !Quality.NONE.equals(quality) ? quality : Quality.PLAYER_PLACED);
     }
 
     @Inject(method = "tryPlaceItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;swing(Lnet/minecraft/world/InteractionHand;Z)V"))
     private static void quality_food$applyQualityOnDisplay(Player player, ServerLevel world, BlockHitResult rez, boolean isMainHand, CallbackInfoReturnable<Boolean> callback, @Local ItemStack stack) {
         Quality quality = QualityUtils.getQuality(stack);
-        LevelData.set(world, rez.getBlockPos(), quality != Quality.NONE ? quality : Quality.PLAYER_PLACED);
+        LevelData.set(world, rez.getBlockPos(), !Quality.NONE.equals(quality) ? quality : Quality.PLAYER_PLACED);
     }
 }

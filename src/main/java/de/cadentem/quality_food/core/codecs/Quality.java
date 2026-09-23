@@ -38,7 +38,7 @@ public record Quality(ResourceLocation type, int level, Optional<List<FoodProper
 
     /** May return a direct holder of {@link QualityType#NONE} */
     public Holder<QualityType> getType() {
-        if (this == NONE) {
+        if (NONE.equals(this)) {
             return Holder.direct(QualityType.NONE);
         }
 
