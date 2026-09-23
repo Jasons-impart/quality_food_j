@@ -49,6 +49,7 @@ public class QualityUtils {
      * Quality depends on the average weight of the quality from the ingredients
      */
     public static void applyQuality(final ItemStack stack, final Collection<ItemStack> ingredients, @Nullable final Player player, final RegistryAccess access) {
+        boolean strict = ServerConfig.STRICT_CRAFTING.get();
         double totalWeight = 0;
         int validIngredients = 0;
 
@@ -60,16 +61,26 @@ public class QualityUtils {
             Holder<QualityType> type = QualityUtils.getType(ingredient);
 
             if (type.value() == QualityType.NONE) {
-                stack.remove(QFComponents.QUALITY_DATA_COMPONENT);
-                return;
+                if (strict) {
+                    // Any quality-applicable ingredient without quality voids the result
+                    stack.remove(QFComponents.QUALITY_DATA_COMPONENT);
+                    return;
+                }
+            } else {
+                totalWeight += type.value().weight();
             }
 
-            totalWeight += type.value().weight();
+            // Upstream behaviour: ingredients without quality still count towards the average (with a weight of 0)
             validIngredients++;
         }
 
         if (validIngredients == 0) {
-            stack.remove(QFComponents.QUALITY_DATA_COMPONENT);
+            if (strict) {
+                stack.remove(QFComponents.QUALITY_DATA_COMPONENT);
+            } else {
+                applyQuality(stack, player, access);
+            }
+
             return;
         }
 
@@ -201,8 +212,13 @@ public class QualityUtils {
         return denominator <= 0.0F ? 1.0F : Mth.clamp((clamped - boost) / denominator, 0.0F, 1.0F);
     }
 
+    /** Must mirror the boost Create Delight Core injects into Ecliptic Seasons' grow chance ({@code QualityCropGrowth#apply}) */
     private static float getRankBoost(final int rank) {
-        return (float) (Math.pow(2, rank - 1) / 4.0D);
+        if (rank >= 3) {
+            return 1.0F;
+        }
+
+        return rank == 2 ? 0.5F : 0.25F;
     }
 
     /** Generic if no further context is present */
@@ -279,6 +295,7 @@ public class QualityUtils {
             return true;
         }
 
+        // Maturity checks for bush-like crops (fruit bushes, strawberries, sweet berries, ...) - immature ones never roll quality, even if tagged
         if (state.hasProperty(BlockStateProperties.AGE_4)) {
             return state.getValue(BlockStateProperties.AGE_4) == 4;
         }
@@ -297,11 +314,7 @@ public class QualityUtils {
             return false;
         }
 
-        if (state.is(QFBlockTags.QUALITY_CROPS)) {
-            return true;
-        }
-
-        if (HarvestAutomationCompat.isExtraCrop(state)) {
+        if (state.is(QFBlockTags.QUALITY_CROPS) || HarvestAutomationCompat.isExtraCrop(state)) {
             return true;
         }
 

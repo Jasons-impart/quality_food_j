@@ -37,6 +37,7 @@ public class ServerConfig {
     public static final ModConfigSpec.DoubleValue SEED_CHANCE_MULTIPLIER;
     public static final ModConfigSpec.BooleanValue HANDLE_COMPACTING;
     public static final ModConfigSpec.BooleanValue HANDLE_SEED_RECIPES;
+    public static final ModConfigSpec.BooleanValue STRICT_CRAFTING;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> NO_QUALITY_RECIPES;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> RETAIN_QUALITY_RECIPES;
 
@@ -62,6 +63,7 @@ public class ServerConfig {
         RETAIN_QUALITY_RECIPES = BUILDER.comment("Define recipes (namespace:path) which should result in the quality should be always be applied to the result (only if all ingredients have the same quality)").defineList("retain_quality_recipes", () -> RETAIN_QUALITY_RECIPES_DEFAULT, () -> "<namespace>:<path>", ServerConfig::validateRecipe);
         HANDLE_COMPACTING = BUILDER.comment("Defines whether (de)compacting should be handled automatically (in terms of retaining quality)").define("handle_compacting", true);
         HANDLE_SEED_RECIPES = BUILDER.comment("Attempt to handle recipes involving seed items automatically (to avoid having to add all of them to the retain_quality_recipes config)").define("handle_seed_recipes", true);
+        STRICT_CRAFTING = BUILDER.comment("If enabled the crafting result gets no quality when any quality-applicable ingredient lacks quality (if disabled the quality is rolled based on the average weight of all quality-applicable ingredients, where ingredients without quality count as weight 0)").define("strict_crafting", true);
         BUILDER.pop();
 
         SPEC = BUILDER.build();

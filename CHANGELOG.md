@@ -17,7 +17,7 @@ CDPR-maintained replacement build based on upstream Quality Food 2.3.6 for Minec
 
 ### Changed
 
-- Crafting is strict: if any quality-applicable ingredient has no quality, the result does not retain or roll quality from the remaining ingredients.
+- Crafting is strict by default (`strict_crafting` server config): if any quality-applicable ingredient has no quality, the result does not retain or roll quality from the remaining ingredients. Disabling the option restores the upstream weighted-average behaviour.
 - Drop contexts now preserve and restore nested harvest operations.
 - Crop checks account for maturity, multi-block base positions, effective farmland, and My Nether's Delight `lit` crops.
 - Sophisticated Core compacting compatibility supports both the CDPR 1.4.36 signature and newer 1.4.54 releases.
