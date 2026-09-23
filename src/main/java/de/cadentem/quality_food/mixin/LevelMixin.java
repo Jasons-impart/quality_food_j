@@ -2,7 +2,6 @@ package de.cadentem.quality_food.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import de.cadentem.quality_food.core.attachments.AttachmentHandler;
-import de.cadentem.quality_food.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,8 +20,10 @@ public abstract class LevelMixin {
             return newState;
         }
 
-        if (!Utils.isValidBlock(newState.getBlock()) && Utils.isValidBlock(oldState.getBlock())) {
-            level.getData(AttachmentHandler.LEVEL_DATA).remove(position);
+        // A different block now occupies this position - neither the stored quality nor a
+        // pending removal record of the previous block should leak to it
+        if (!newState.is(oldState.getBlock())) {
+            level.getData(AttachmentHandler.LEVEL_DATA).remove(position, level.getGameTime());
         }
 
         return newState;
