@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.3.6-cdpr.3
+
+- Added a `strict_crafting` server option, enabled by default; disabling it restores upstream weighted-average crafting quality.
+- Fixed quality propagation for AE2 terminal crafting, Display Delight placement, Functional Storage compacting, Ratatouille baking, and several right-click harvest paths.
+- Preserved nested harvest contexts, effective farmland for multi-block crops, and quality across matching stem and cave vine growth transitions.
+- Added CDC harvest compatibility and hardened Quality and LevelData persistence handling.
+
 ## 2.3.6-cdpr.1
 
 CDPR-maintained replacement build based on upstream Quality Food 2.3.6 for Minecraft 1.21.1 and NeoForge.
