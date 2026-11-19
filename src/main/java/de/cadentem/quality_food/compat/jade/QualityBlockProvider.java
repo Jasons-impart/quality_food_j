@@ -17,8 +17,8 @@ import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 import snownee.jade.impl.ui.ElementHelper;
 
-public class QualityProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
-    private static final ResourceLocation ID = QualityFood.location("quality");
+public class QualityBlockProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private static final ResourceLocation ID = QualityFood.location("quality_block");
     private static final Vec2 TRANSLATE = new Vec2(2, 0.5f);
 
     @Override
@@ -58,6 +58,6 @@ public class QualityProvider implements IBlockComponentProvider, IServerDataProv
 
     @Override
     public boolean shouldRequestData(final BlockAccessor accessor) {
-        return Utils.isValidBlock(accessor.getBlock());
+        return Utils.isValidBlock(accessor.getBlock()) || Utils.isBlockException(accessor.getBlockState());
     }
 }

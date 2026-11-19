@@ -1,7 +1,6 @@
 package de.cadentem.quality_food.data;
 
 import de.cadentem.quality_food.QualityFood;
-import de.cadentem.quality_food.compat.Compat;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.tags.BlockTags;
@@ -15,8 +14,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 
-import static de.cadentem.quality_food.compat.Compat.*;
-import static de.cadentem.quality_food.compat.Compat.Mod.*;
+import static de.cadentem.quality_food.compat.Compat.Mod.COLLECTORS_REAP;
+import static de.cadentem.quality_food.compat.Compat.Mod.CRATE_DELIGHT;
+import static de.cadentem.quality_food.compat.Compat.Mod.FARMERSDELIGHT;
+import static de.cadentem.quality_food.compat.Compat.Mod.FARM_AND_CHARM;
+import static de.cadentem.quality_food.compat.Compat.Mod.HERALBREWS;
+import static de.cadentem.quality_food.compat.Compat.Mod.QUARK;
+import static de.cadentem.quality_food.compat.Compat.Mod.SUPPLEMENTARIES;
+import static de.cadentem.quality_food.compat.Compat.Mod.VINERY;
+import static de.cadentem.quality_food.compat.Compat.Mod.VINTAGEDELIGHT;
+import static de.cadentem.quality_food.compat.Compat.location;
 
 public class QFBlockTags extends BlockTagsProvider {
     public static final TagKey<Block> QUALITY_BLOCKS = BlockTags.create(QualityFood.location("quality_blocks"));
@@ -75,6 +82,12 @@ public class QFBlockTags extends BlockTagsProvider {
                 .addOptional(location(FARMERSDELIGHT.modid(), "rice"))
                 .addOptional(location(COLLECTORS_REAP.modid(), "lime_cake"))
                 .addOptional(location(COLLECTORS_REAP.modid(), "pomegranate_cake"))
+                .addOptional(location(HERALBREWS.modid(), "dried_green_tea_leaf_block"))
+                .addOptional(location(HERALBREWS.modid(), "dried_out_green_tea_leaf_block"))
+                .addOptional(location(HERALBREWS.modid(), "mixed_tea_leaf_block"))
+                .addOptional(location(HERALBREWS.modid(), "oolong_tea_leaf_block"))
+                .addOptional(location(HERALBREWS.modid(), "green_tea_leaf_block"))
+                .addOptional(location(HERALBREWS.modid(), "black_tea_leaf_block"))
                 /* Storage blocks */
                 .addOptional(location(FARMERSDELIGHT.modid(), "carrot_crate"))
                 .addOptional(location(FARMERSDELIGHT.modid(), "potato_crate"))
@@ -154,12 +167,29 @@ public class QFBlockTags extends BlockTagsProvider {
                 .addOptional(location("miners_delight", "cave_carrot_crate"))
 
                 .addOptional(location(HERALBREWS.modid(), "tea_leaf_crate"))
-//                .addOptional(location(HERALBREWS.modid(), "green_tea_leaf_block"))
-//                .addOptional(location(HERALBREWS.modid(), "dried_green_tea_leaf_block"))
-//                .addOptional(location(HERALBREWS.modid(), "black_tea_leaf_block"))
-//                .addOptional(location(HERALBREWS.modid(), "mixed_tea_leaf_block"))
-//                .addOptional(location(HERALBREWS.modid(), "oolong_leaf_block"))
 
+                .addOptional(location(VINTAGEDELIGHT.modid(), "oat_bag"))
+                .addOptional(location(VINTAGEDELIGHT.modid(), "oat_bale"))
+                .addOptional(location(VINTAGEDELIGHT.modid(), "ghost_pepper_crate"))
+                .addOptional(location(VINTAGEDELIGHT.modid(), "cucumber_crate"))
+                .addOptional(location(VINTAGEDELIGHT.modid(), "peanut_crate"))
+                .addOptional(location(VINTAGEDELIGHT.modid(), "gearo_berry_bag"))
+
+                .addOptional(location("hearthandharvest", "blueberry_crate"))
+                .addOptional(location("hearthandharvest", "cherry_crate"))
+                .addOptional(location("hearthandharvest", "red_grape_crate"))
+                .addOptional(location("hearthandharvest", "green_grape_crate"))
+                .addOptional(location("hearthandharvest", "raspberry_crate"))
+                .addOptional(location("hearthandharvest", "peanut_crate"))
+                .addOptional(location("hearthandharvest", "corn_crate"))
+                .addOptional(location("hearthandharvest", "apple_crate"))
+                .addOptional(location("hearthandharvest", "golden_apple_crate"))
+                .addOptional(location("hearthandharvest", "golden_carrot_crate"))
+                .addOptional(location("hearthandharvest", "glistering_melon_crate"))
+                .addOptional(location("hearthandharvest", "poisonous_potato_crate"))
+                .addOptional(location("hearthandharvest", "rotten_tomato_crate"))
+                .addOptional(location("hearthandharvest", "glow_berry_crate"))
+                .addOptional(location("hearthandharvest", "sweet_berry_crate"))
         ;
     }
 }

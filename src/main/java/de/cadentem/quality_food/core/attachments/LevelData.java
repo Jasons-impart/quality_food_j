@@ -140,5 +140,11 @@ public class LevelData implements INBTSerializable<CompoundTag> {
         return get(level, position, false);
     }
 
+    public static void remove(final LevelAccessor level, final BlockPos position) {
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.getData(AttachmentHandler.LEVEL_DATA).remove(position, serverLevel.getGameTime());
+        }
+    }
+
     private record RemovedQuality(Quality quality, long gameTime) { }
 }

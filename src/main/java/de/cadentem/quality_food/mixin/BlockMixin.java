@@ -4,11 +4,13 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import de.cadentem.quality_food.core.attachments.LevelData;
+import de.cadentem.quality_food.core.codecs.Quality;
 import de.cadentem.quality_food.util.DropData;
 import de.cadentem.quality_food.util.QualityUtils;
 import de.cadentem.quality_food.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -99,10 +101,10 @@ public abstract class BlockMixin {
         }
     }
 
-    /** Apply quality to block drops (not a loot modifier to make it also work with right-click harvesting) */
+    /** Covers manually spawned drops, including those produced by right-click harvests. */
     @ModifyVariable(method = "popResource(Lnet/minecraft/world/level/Level;Ljava/util/function/Supplier;Lnet/minecraft/world/item/ItemStack;)V", at = @At("HEAD"), argsOnly = true)
     private static ItemStack quality_food$applyQuality(final ItemStack stack, @Local(argsOnly = true) final Level level) {
-        if (!Utils.isValidItem(stack)) {
+        if (!(level instanceof ServerLevel) || !Utils.isValidItem(stack)) {
             return stack;
         }
 
@@ -113,9 +115,9 @@ public abstract class BlockMixin {
         }
 
         if (dropData == null) {
-            QualityUtils.applyQuality(stack, null, level.registryAccess());
+            QualityUtils.applyHarvestQuality(stack, null, Quality.NONE, null, null, level.registryAccess());
         } else {
-            QualityUtils.applyQuality(stack, dropData.state(), dropData.quality(), dropData.player(), dropData.farmland(), level.registryAccess(), dropData.level(), dropData.position());
+            QualityUtils.applyHarvestQuality(stack, dropData.state(), dropData.quality(), dropData.player(), dropData.farmland(), level.registryAccess(), dropData.level(), dropData.position());
         }
 
         return stack;

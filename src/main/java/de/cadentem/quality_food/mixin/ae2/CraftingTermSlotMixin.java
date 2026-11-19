@@ -29,8 +29,7 @@ public abstract class CraftingTermSlotMixin {
     @ModifyVariable(method = "craftItem", at = @At(value = "INVOKE", target = "Lappeng/menu/slot/CraftingTermSlot;makeItem(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V"), ordinal = 0, argsOnly = false, name = "is")
     private ItemStack quality_food$applyQuality(final ItemStack result, @Local(argsOnly = true) final Player player, @Local final Level level) {
         RecipeHolder<?> recipe = ((RecipeCraftingHolder) this).getRecipeUsed();
-        if (level.isClientSide() || !(recipe != null && recipe.value() instanceof CraftingRecipe) || result.isEmpty()
-                || ServerConfig.isNoQualityRecipe(recipe, level.registryAccess())) {
+        if (level.isClientSide() || recipe == null || !(recipe.value() instanceof CraftingRecipe) || result.isEmpty()) {
             return result;
         }
 
@@ -49,7 +48,7 @@ public abstract class CraftingTermSlotMixin {
 
         QualityUtils.handleConversion(result, container, recipe, level.registryAccess());
 
-        if (!QualityUtils.hasQuality(result)) {
+        if (!QualityUtils.hasQuality(result) && !ServerConfig.isNoQualityRecipe(recipe, level.registryAccess())) {
             QualityUtils.applyQuality(result, ingredients, player, level.registryAccess());
         }
 

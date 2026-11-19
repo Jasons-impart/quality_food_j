@@ -1,5 +1,6 @@
 package de.cadentem.quality_food.util;
 
+import de.cadentem.quality_food.compat.Compat;
 import de.cadentem.quality_food.core.attachments.AttachmentHandler;
 import de.cadentem.quality_food.core.attachments.BlockData;
 import de.cadentem.quality_food.core.attachments.LevelData;
@@ -7,11 +8,14 @@ import de.cadentem.quality_food.core.codecs.Quality;
 import de.cadentem.quality_food.core.codecs.QualityType;
 import de.cadentem.quality_food.data.QFBlockTags;
 import de.cadentem.quality_food.data.QFItemTags;
-import de.cadentem.quality_food.network.CookingParticles;
+import de.cadentem.quality_food.network.SyncCookingParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
@@ -23,13 +27,20 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import vectorwing.farmersdelight.common.block.PieBlock;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Utils {
+    private static final ResourceLocation CHEESE_MOLD = Compat.location(Compat.Mod.VINTAGEDELIGHT.modid(), "cheese_mold");
+
     public static boolean isValidItem(final ItemStack stack) {
         return isValidItem(stack, true);
     }
@@ -64,11 +75,22 @@ public class Utils {
     public static boolean isValidBlock(final Block block, boolean checkItem) {
         if (block.builtInRegistryHolder().is(QFBlockTags.QUALITY_BLOCKS)) {
             return true;
-        } else if (checkItem) {
+        }
+
+        if (Compat.Mod.FARMERSDELIGHT.isLoaded() && block instanceof PieBlock) {
+            return true;
+        }
+
+        if (checkItem) {
             return isValidItem(block.asItem().getDefaultInstance(), false);
         }
 
         return false;
+    }
+
+    /** Blocks that should not store quality themselves */
+    public static boolean isBlockException(final BlockState state) {
+        return CHEESE_MOLD.equals(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
     }
 
     public static void sendParticles(final ServerLevel serverLevel, final BlockEntity furnace, final BlockPos position) {
@@ -76,10 +98,10 @@ public class Utils {
 
         if (serverLevel.getGameTime() % (10 + tickOffset) == 0) {
             BlockData data = furnace.getData(AttachmentHandler.BLOCK_DATA);
-            double qualityBonus = data.getQuality();
+            double queueSize = data.getQueueSize();
 
-            if (qualityBonus > 0.1) {
-                PacketDistributor.sendToPlayersNear(serverLevel, null, position.getX(), position.getY(), position.getZ(), 64, new CookingParticles(position, qualityBonus));
+            if (queueSize > 0) {
+                PacketDistributor.sendToPlayersNear(serverLevel, null, position.getX(), position.getY(), position.getZ(), 64, new SyncCookingParticles(position, queueSize));
             }
         }
     }
@@ -122,10 +144,22 @@ public class Utils {
      * @param maxSlotCheck To determine up to which slot the items should be considered
      */
     public static Collection<ItemStack> collectIngredients(final ItemStackHandler handler, final Supplier<Integer> maxSlotCheck) {
+        return collectIngredients(handler::getStackInSlot, maxSlotCheck);
+    }
+
+    /**
+     * Collects quality-applicable items from the given inventory
+     * @param maxSlotCheck To determine up to which slot the items should be considered
+     */
+    public static Collection<ItemStack> collectIngredients(final Container container, final Supplier<Integer> maxSlotCheck) {
+        return collectIngredients(container::getItem, maxSlotCheck);
+    }
+
+    private static Collection<ItemStack> collectIngredients(final Function<Integer, ItemStack> itemSupplier, final Supplier<Integer> maxSlotCheck) {
         List<ItemStack> ingredients = new ArrayList<>();
 
         for (int slot = 0; slot < maxSlotCheck.get(); slot++) {
-            ItemStack ingredient = handler.getStackInSlot(slot);
+            ItemStack ingredient = itemSupplier.apply(slot);
 
             if (!Utils.isValidItem(ingredient)) {
                 continue;
@@ -141,30 +175,31 @@ public class Utils {
      * Collects the cooking bonus from the ingredients and the lowest quality type present </br>
      * This is then added to the cooking queue which will be used to apply the cooking bonus / quality to the result item
      */
-    public static void incrementQuality(final BlockEntity blockEntity, @Unmodifiable final Collection<ItemStack> ingredients, int resultStackSize) {
-        if (blockEntity.getLevel() == null || blockEntity.getLevel().isClientSide() || ingredients.isEmpty()) {
+    public static void incrementQuality(final BlockEntity blockEntity, @Unmodifiable final Collection<ItemStack> ingredients, @Unmodifiable final ItemStack result) {
+        if (blockEntity.getLevel() == null || blockEntity.getLevel().isClientSide() || ingredients.isEmpty() || !Utils.isValidItem(result)) {
             return;
         }
 
+        int resultStackSize = result.getCount();
+
+        Set<Holder<QualityType>> qualities = new TreeSet<>(Comparator.comparingInt(quality -> quality.value().level()));
         double qualityBonus = 0;
-        Holder<QualityType> selected = null;
 
         for (ItemStack ingredient : ingredients) {
             Holder<QualityType> type = QualityUtils.getType(ingredient);
 
             if (type.value() != QualityType.NONE) {
-                // Lower stack size result in a higher bonus so that the intended bonus will be reached
-                double bonus = type.value().cookingBonus() * (64d / resultStackSize);
-                qualityBonus += bonus / ingredients.size();
+                qualityBonus += type.value().cookingBonus() / ingredients.size();
             }
 
-            if (selected == null || type.value().level() < selected.value().level()) {
-                selected = type;
-            }
+            qualities.add(type);
         }
 
         BlockData data = blockEntity.getData(AttachmentHandler.BLOCK_DATA);
-        data.addQualityEntry(selected, qualityBonus);
+
+        for (int i = 0; i < resultStackSize; i++) {
+            data.addQualityEntry(qualities.stream().findFirst().orElse(Holder.direct(QualityType.NONE)), qualityBonus);
+        }
 
         blockEntity.setChanged();
     }

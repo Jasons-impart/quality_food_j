@@ -3,14 +3,20 @@
   "minVersion": "0.8",
   "package": "de.cadentem.quality_food.mixin",
   "compatibilityLevel": "JAVA_21",
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  },
   "plugin": "de.cadentem.quality_food.mixin.ApplyMixinPlugin",
   "mixins": [
+    "ItemStackMixin",
     "AbstractFurnaceBlockEntityMixin",
     "AbstractFurnaceMenuMixin",
+    "AnimalMixin",
     "BlockItemMixin",
     "BlockMixin",
     "CakeBlockMixin",
     "CampFireBlockEntityMixin",
+    "CowMixin",
     "CrafterBlockMixin",
     "CrafterMenuMixin",
     "CraftingMenuMixin",
@@ -52,6 +58,7 @@
     "neapolitan.MintBlockMixin",
     "neapolitan.StrawberryBushBlockMixin",
     "trailandtales_delight.BuddingLanternFruitBlockMixin",
+    "farmersdelight.AbstractStoveBlockEntityMixin",
     "farmersdelight.CookingPotBlockEntityMixin",
     "farmersdelight.CookingPotMenuMixin",
     "farmersdelight.CookingPotResultSlotMixin",
@@ -87,6 +94,8 @@
     "kaleidoscope_cookery.SteamerBlockEntityMixin",
     "kaleidoscope_cookery.StockpotBlockEntityMixin",
     "l2harvester.HarvesterControllerMixin",
+    "minecolonies.EntityAIWorkFarmerMixin",
+    "minecolonies.MineColoniesCropBlockMixin",
     "miners_delight.CopperPotBlockEntityMixin",
     "miners_delight.CopperPotMenuMixin",
     "miners_delight.CopperPotResultSlotMixin",
@@ -107,7 +116,11 @@
     "toms_storage.CraftingTerminalBlockEntityMixin",
     "toms_storage.CraftingTerminalMenuMixin",
     "vinery.GrapeBushMixin",
-    "vinery.GrapeVineBlockMixin"
+    "vinery.GrapeVineBlockMixin",
+    "vintagedelight.AbstractContainerMenuMixin",
+    "vintagedelight.CheeseMoldBlockMixin",
+    "vintagedelight.FermentingJarBlockEntityMixin",
+    "vintagedelight.FermentingJarMenuMixin"
   ],
   "client": [
     "client.GuiGraphicsMixin",

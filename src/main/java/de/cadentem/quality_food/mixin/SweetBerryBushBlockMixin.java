@@ -1,9 +1,12 @@
 package de.cadentem.quality_food.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import de.cadentem.quality_food.util.HarvestContext;
 import de.cadentem.quality_food.util.QualityUtils;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,8 +16,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(SweetBerryBushBlock.class)
 public class SweetBerryBushBlockMixin {
     @ModifyArg(method = "useWithoutItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/SweetBerryBushBlock;popResource(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;)V"), index = 2)
-    private ItemStack quality_food$applyQuality(final ItemStack stack, @Local(argsOnly = true) final Player player) {
-        QualityUtils.applyQuality(stack, player, player.registryAccess());
+    private ItemStack quality_food$applyQuality(final ItemStack stack, @Local(argsOnly = true) final Player player, @Local(argsOnly = true) final BlockState state, @Local(argsOnly = true) final BlockPos position) {
+        QualityUtils.applyHarvestQuality(HarvestContext.create(stack, player.level()).position(position).state(state).player(player).build());
         return stack;
     }
 }
