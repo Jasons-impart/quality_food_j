@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.4.5-cdpr.1
+
+- Updated to upstream Quality Food 2.4.5 for Minecraft 1.21.1 and NeoForge.
+- Added animal quality potential. Feeding quality food raises potential, offspring inherit a portion, and Jade displays the animal's potential.
+- Added automatic quality retention for detected storage recipes and separate quality caps for natural harvests and loot.
+- Updated cooking quality calculations, expanded Create, Farmer's Delight, Vintage Delight, and MineColonies compatibility, and integrated upstream FastWorkbench fixes.
+- Preserved CDPR's strict crafting, automated harvest quality rules, and compatibility with existing block quality data.
+- Added a Quality Food icon to the NeoForge mod list.
+
 ## 2.3.6-cdpr.3
 
 - Added a `strict_crafting` server option, enabled by default; disabling it restores upstream weighted-average crafting quality.
